@@ -1,69 +1,49 @@
 import Foundation
+
+struct categoryModel {
+    var name: String = ""
+    var kind: Int = 0
+    init(_ nameStr:String,_ kindInt: Int) {
+        name = nameStr
+        kind = kindInt
+    }
+}
+
 class PrdManager {
     
-    func getProduct() {
-        let urlString: String = "http://kane1213.synology.me/maysbagel/api/product/?items";
-        // let url = URL(string: urlString);
-        // let url2 = NSURL(string: urlString);
-        
-        
-        let jsonObj = getJSON(urlToRequest: urlString)
-        print(jsonObj)
-        
-        
-//        URLSession.shared.dataTask(with: (url2 as? URL)!, completionHandler: {(data, response, error) -> Void in
-//
-//            if let jsonObj = try? JSONSerialization.jsonObject(with: data!, options: .allowFragments) as? NSDictionary {
-//
-//                print(jsonObj!.value(forKey: "Data"))
-//
-//
-//                if let prdArray = jsonObj!.value(forKey: "Data") as? NSArray {
-//                    print(prdArray)
-//                }
-//
-//
-//            }
-//            
-//        }).resume()
-        
-        
-        
-//        URLSession.shared.dataTask(with: url!, completionHandler: { (data, response,
-//            error) in
-//            print("test123")
-//            // 先判斷error
-//            if error != nil{
-//
-//            }else{
-//
-//                //data就是download下來的資料...
-//                // 先解開 optional...   -> urlContent
-//                //  然後在呼叫 JSONSerialization.jsonObject
-//                //   由於他是會throws  ,  所以要用  do catch 的方式
-//                if let urlContent = data{
-//                    do{
-//                        let jsonresult =   try  JSONSerialization.jsonObject(with: urlContent, options: JSONSerialization.ReadingOptions.mutableContainers)
-//                        print(jsonresult)
-//                    }catch{
-//                        print(error.localizedDescription)
-//                    }
-//                }
-//            }
-//
-//        })
-        
+    enum JSONError: String, Error {
+        case unknownError = "Error: Unknowned"
+        case noData = "Error: No Data"
+        case parseFailed = "Error: Parse Failed"
     }
-    
-    func getJSON(urlToRequest: String) -> NSData{
-        return NSData(contentsOf: NSURL(string: urlToRequest) as! URL)
-    }
-    
-    func parseJSON(inputData: NSData) -> NSDictionary{
-        var error: NSError?
-        var boardsDictionary: NSDictionary = JSONSerialization.JSONObjectWithData(inputData, options: JSONSerialization.ReadingOptions.MutableContainers, error: &error) as NSDictionary
+    func getProduct(_ urlString: String, completion: @escaping (ProductAPIResult) -> Void) {
+        let request =
+            URLRequest(url: URL(string: urlString)!)
         
-        return boardsDictionary
+        let requestTask = URLSession.shared.dataTask(with: request) { (data, response, error) in
+            do {
+                guard error == nil else {
+                    throw JSONError.unknownError
+                }
+                guard data != nil else {
+                    throw JSONError.noData
+                }
+                guard let _ = try JSONSerialization.jsonObject(with: data!, options:[]) as? NSDictionary else {
+                    throw JSONError.parseFailed
+                }
+                let decoder = JSONDecoder()
+                if let result = try? decoder.decode(ProductAPIResult.self, from: data!) {
+                    completion(result)
+                
+                } else {
+                    // completion(nil)
+                }
+                
+            } catch {
+                // print(error)
+            }
+        }
+        requestTask.resume()
     }
     
     func getProductList(completion: ([SimPrdModel]) -> Void) {
@@ -83,6 +63,14 @@ class PrdManager {
             completion(nil)
         }
     }
+    
+    let categories: [categoryModel] =
+        [
+            categoryModel("Bread", 1),
+            categoryModel("Cake", 2),
+            categoryModel("Coffee", 3),
+            categoryModel("Other", 4)
+        ]
     
     let sampleSimpleProducts: [[String : AnyHashable]] =
         [

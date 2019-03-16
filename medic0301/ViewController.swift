@@ -1,52 +1,77 @@
-//
-//  ViewController.swift
-//  medic0301
-//
-//  Created by Mini on 2019/3/1.
-//  Copyright © 2019 Mini. All rights reserved.
-//
-
 import UIKit
 import UserNotifications
+import SnapKit
 class ViewController: UIViewController {
     var noticeBtn: UIButton!
-    var tableView: UITableView!
     var manager: PrdManager!
-    var productList: [SimPrdModel] = []
+    var mainScroll:UIScrollView!
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = UIColor.black
         manager = PrdManager()
-        tableView = UITableView()
-        tableView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(tableView)
-        tableView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
-        tableView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
-        tableView.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
-        tableView.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
+        generateCategories(manager.categories)
         
-        tableView.register(PrdTableViewCell.self,
-                           forCellReuseIdentifier: "cell")
-        tableView.dataSource = self
-        tableView.delegate = self
-        tableView.rowHeight = 180
-        manager.getProduct()
-        manager.getProductList { (productModels) in
-            self.productList = productModels
-            self.tableView.reloadData()
+    }
+    
+    func generateCategories(_ items: [categoryModel]) {
+        mainScroll = UIScrollView()
+        view.addSubview(mainScroll)
+        
+        mainScroll.snp.makeConstraints { (make) in
+            make.top.equalTo(view.safeAreaLayoutGuide.snp.top)
+            make.left.equalTo(view.safeAreaLayoutGuide.snp.left)
+            make.right.equalTo(view.safeAreaLayoutGuide.snp.right)
+            make.bottom.equalTo(self.view.snp.bottom)
+        }
+        mainScroll.isPagingEnabled = false
+        for category in items {
+            var item: CategoryView = CategoryView()
+            item.titleLabel.text = category.name
+            mainScroll.addSubview(item)
+            item.layer.cornerRadius = 30
+            item.snp.makeConstraints({ (make) in
+                make.height.equalTo(220)
+                make.left.equalTo(mainScroll.snp.left).offset(10)
+                make.right.equalTo(view.safeAreaLayoutGuide).offset(-10)
+                if mainScroll.subviews.count == 1 {
+                    make.top.equalTo(mainScroll.snp.top).offset(10)
+                } else {
+                    if let last:UIView = mainScroll.subviews[mainScroll.subviews.count - 2] {
+                        make.top.equalTo(last.snp.bottom).offset(10)
+                    }
+                }
+                
+                if mainScroll.subviews.count == items.count {
+                     make.bottom.equalTo(mainScroll.snp.bottom).offset(20)
+                }
+            })
+            item.tag = category.kind
+            item.backgroundImg.image = UIImage(named: "c\(category.kind)")
+            let gesture:UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(self.navigateToProducts))
+            
+            item.addGestureRecognizer(gesture)
         }
     }
     
     func createNotiButton() {
         noticeBtn = UIButton()
         view.addSubview(noticeBtn)
-        noticeBtn.translatesAutoresizingMaskIntoConstraints = false
-        noticeBtn.centerYAnchor.constraint(equalTo: view.centerYAnchor).isActive = true
-        noticeBtn.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
-        noticeBtn.widthAnchor.constraint(equalToConstant: 120).isActive = true
-        noticeBtn.heightAnchor.constraint(equalToConstant: 50).isActive = true
+        noticeBtn.snp.makeConstraints {
+            (make)->Void in
+            make.center.equalTo(view.snp.center)
+            make.width.equalTo(120)
+            make.height.equalTo(50)
+        }
         noticeBtn.setTitle("notice", for: .normal)
         noticeBtn.backgroundColor = UIColor.red
         noticeBtn.addTarget(self, action:#selector(showNotification), for: .touchUpInside)
+    }
+    
+    @objc func navigateToProducts(_ sender: UITapGestureRecognizer) {
+        if let key:Int = sender.view!.tag {
+            let nextViewController = ProductsViewController(kind: key)
+            self.navigationController?.pushViewController(nextViewController, animated: true)
+        }
     }
     
     @objc func showNotification(_ button:UIButton) {
@@ -65,49 +90,4 @@ class ViewController: UIViewController {
         UNUserNotificationCenter.current().add(request, withCompletionHandler: { error in print("establish notification")
         })
     }
-}
-
-extension ViewController: UITableViewDelegate, UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return productList.count
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let prdModel = productList[indexPath.row]
-        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! PrdTableViewCell
-        cell.productNameLabel.text = prdModel.productName
-        cell.productPriceLabel.text = prdModel.productPrice
-        cell.productTypeLabel.text = prdModel.productType.productTypeContent
-        
-        do {
-            let imgData = try Data(contentsOf: prdModel.productImageURL!)
-            cell.productImageView.image = UIImage(data: imgData)
-        } catch {
-            print("image error")
-        }
-        return cell
-    }
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let prdModel = productList[indexPath.row]
-        manager.getDetailProduct(productID: prdModel.productID)
-        { (detail) in
-            
-
-            if let detailInfo = detail {
-                DispatchQueue.main.async {
-                    print("---ACCESS1---")
-                    let nextVC = DetailViewController(prdInfo: detailInfo)
-                    self.navigationController?.pushViewController(nextVC, animated: true)
-                    print("---ACCESS2---")
-                    if let selectIdxPath = tableView.indexPathForSelectedRow {
-                        tableView.deselectRow(at: selectIdxPath, animated: true)
-                    }
-                    print("---ACCESS3---")
-                }
-            }
-            
-        }
-    }
-    
 }

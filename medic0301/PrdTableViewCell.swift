@@ -1,62 +1,61 @@
-//
-//  PrdTableViewCell.swift
-//  medic0301
-//
-//  Created by Mini on 2019/3/1.
-//  Copyright © 2019 Mini. All rights reserved.
-//
-
 import UIKit
+import SnapKit
 
 class PrdTableViewCell: UITableViewCell {
     var productImageView: UIImageView!
-    var productNameLabel: UILabel!
-    var productTypeLabel: UILabel!
-    var productPriceLabel: UILabel!
+    var titleLabel: UILabel!
+    var typeLabel: UILabel!
+    var contentLabel: UILabel!
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
+        contentView.translatesAutoresizingMaskIntoConstraints = false
         productImageView = UIImageView()
-        productImageView.backgroundColor = UIColor.red
-        productImageView.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(productImageView)
-        productImageView.widthAnchor.constraint(equalToConstant: 160).isActive = true
-        productImageView.topAnchor.constraint(equalTo: topAnchor,
-                                              constant: 20).isActive = true
-        productImageView.leftAnchor.constraint(equalTo: leftAnchor,
-                                               constant: 20).isActive = true
-        productImageView.bottomAnchor.constraint(equalTo: bottomAnchor,
-                                                 constant: -20).isActive = true
+        titleLabel = UILabel()
+        typeLabel = UILabel()
+        contentLabel = UILabel()
+        for tmpView in [productImageView, titleLabel, typeLabel, contentLabel] {
+            addSubview(tmpView as! UIView)
+        }
         
-        productNameLabel = UILabel()
-        productNameLabel.text = "商品"
-        productNameLabel.textColor = UIColor.gray
-        productNameLabel.font = UIFont.systemFont(ofSize: 24)
-        productNameLabel.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(productNameLabel)
-        productNameLabel.topAnchor.constraint(equalTo: productImageView.topAnchor).isActive = true
-        productNameLabel.leftAnchor.constraint(equalTo: productImageView.rightAnchor, constant: 16).isActive = true
-        productNameLabel.rightAnchor.constraint(equalTo: rightAnchor, constant: -16).isActive = true
+        productImageView.contentMode = .scaleAspectFill
+        productImageView.clipsToBounds = true
+        productImageView.snp.makeConstraints {
+            (make) -> Void in
+            make.width.height.equalTo(120)
+            make.top.left.equalTo(20)
+            // make.bottom.equalTo(contentView.snp.bottom).offset(-20)
+        }
         
-        productTypeLabel = UILabel()
-        productTypeLabel.textColor = UIColor.gray
-        productTypeLabel.text = "類別"
-        productTypeLabel.font = UIFont.systemFont(ofSize: 24)
-        productTypeLabel.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(productTypeLabel)
-        productTypeLabel.topAnchor.constraint(equalTo: productNameLabel.bottomAnchor, constant: 16).isActive = true
-        productTypeLabel.leftAnchor.constraint(equalTo: productImageView.rightAnchor, constant: 16).isActive = true
-        productTypeLabel.rightAnchor.constraint(equalTo: rightAnchor, constant: -16).isActive = true
+        typeLabel.modifyLabel(text: "類別", color: UIColor.lightGray, size: 12)
+        typeLabel.snp.makeConstraints {
+            (make) -> Void in
+            make.top.equalTo(productImageView.snp.top)
+            make.left.equalTo(productImageView.snp.right).offset(16)
+            make.right.equalTo(contentView.snp.right).offset(-16)
+        }
         
-        productPriceLabel = UILabel()
-        productPriceLabel.text = "價格"
-        productPriceLabel.textColor = UIColor.gray
-        productPriceLabel.font = UIFont.systemFont(ofSize: 24)
-        productPriceLabel.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(productPriceLabel)
-        productPriceLabel.topAnchor.constraint(equalTo: productTypeLabel.bottomAnchor, constant: 16).isActive = true
-        productPriceLabel.leftAnchor.constraint(equalTo: productImageView.rightAnchor, constant: 16).isActive = true
-        productPriceLabel.rightAnchor.constraint(equalTo: rightAnchor, constant: -16).isActive = true
+        titleLabel.modifyLabel(text: "商品", color: UIColor.black , size: 24)
+        titleLabel.snp.makeConstraints {
+            (make) -> Void in
+            make.top.equalTo(typeLabel.snp.bottom).offset(3)
+            make.left.equalTo(productImageView.snp.right).offset(16)
+            make.right.equalTo(contentView.snp.right).offset(-16)
+        }
+        
+        contentLabel.modifyLabel(text: "類別", color: UIColor.gray, size: 18)
+        contentLabel.numberOfLines = 2
+        contentLabel.snp.makeConstraints {
+            (make) -> Void in
+            make.top.equalTo(titleLabel.snp.bottom).offset(8)
+            make.left.equalTo(productImageView.snp.right).offset(16)
+            make.right.equalTo(contentView.snp.right).offset(-16)
+        }
+        
+//        contentView.snp.makeConstraints {
+//            (make) -> Void in
+//            make.bottom.equalTo(productImageView.snp.bottom)
+//        }
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -70,8 +69,14 @@ class PrdTableViewCell: UITableViewCell {
 
     override func setSelected(_ selected: Bool, animated: Bool) {
         super.setSelected(selected, animated: animated)
-
         // Configure the view for the selected state
     }
+}
 
+extension UILabel {
+    func modifyLabel(text:String, color:UIColor, size:CGFloat) {
+        self.text = text
+        self.textColor = color
+        self.font = UIFont.systemFont(ofSize: size)
+    }
 }
